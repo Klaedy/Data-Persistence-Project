@@ -19,7 +19,7 @@ public class GameManager : MonoBehaviour
     
     private bool m_Started = false;
     public int m_Points;
-    
+    public string playerName;
     private bool m_GameOver = false;
 
     
@@ -41,6 +41,7 @@ public class GameManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+        playerName = mainManagerScript.LoadPlayerName();
     }
 
     private void Update()
@@ -79,16 +80,19 @@ public class GameManager : MonoBehaviour
         m_GameOver = true;
         GameOverText.SetActive(true);
         if (m_Points > mainManagerScript.record)
-        {
-            Debug.Log("Puntos mayores que record");
+        {          
             mainManagerScript.SavePoints();
             mainManagerScript.SaveName();
+            mainManagerScript.record = m_Points;
+            playerName = mainManagerScript.input;
+            mainManagerScript.SavePlayerName(playerName);
         }      
     }
 
+
     public void ShowNameScore()
     {
-        mainManagerScript.LoadName();
-        nameScoreText.text = $"Best Score: {mainManagerScript.input}: {mainManagerScript.record}";
+        
+        nameScoreText.text = $"Best Score: {playerName}: {mainManagerScript.record}";
     }
 }

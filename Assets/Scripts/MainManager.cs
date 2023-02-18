@@ -16,7 +16,8 @@ public class MainManager : MonoBehaviour
 
     void Start()
     {
-      
+        LoadPoints();
+        Debug.Log(Application.persistentDataPath);
     }
 
     void Update()
@@ -47,7 +48,7 @@ public class MainManager : MonoBehaviour
     {
         SceneManager.LoadScene(1);
     }
-
+   
     public void CallGameManager()
     {
         Scene currentScene = SceneManager.GetActiveScene();
@@ -63,6 +64,7 @@ public class MainManager : MonoBehaviour
     {
         public string input;
         public int record;
+        public string playerName;
     }
 
     public void SaveName()
@@ -72,7 +74,7 @@ public class MainManager : MonoBehaviour
 
         string json = JsonUtility.ToJson(data);
 
-        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
+        File.WriteAllText(Application.persistentDataPath + "/savefilename.json", json);
     }
 
     public void SavePoints()
@@ -80,14 +82,14 @@ public class MainManager : MonoBehaviour
         gameManagerScript = GameObject.Find("GameManager").GetComponent<GameManager>();
         record = gameManagerScript.m_Points;
         SaveData data = new SaveData();
-        data.record = gameManagerScript.m_Points;
+        data.record = record;
         string json = JsonUtility.ToJson(data);
-        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);       
+        File.WriteAllText(Application.persistentDataPath + "/savefilepoints.json", json);       
     }
 
     public void LoadName()
     {
-        string path = Application.persistentDataPath + "/savefile.json";
+        string path = Application.persistentDataPath + "/savefilename.json";
         if (File.Exists(path))
         {
             string json = File.ReadAllText(path);
@@ -96,10 +98,10 @@ public class MainManager : MonoBehaviour
             input = data.input;
         }
     }
-
+   
     public void LoadPoints()
     {
-        string path = Application.persistentDataPath + "/savefile.json";
+        string path = Application.persistentDataPath + "/savefilepoints.json";
         if (File.Exists(path))
         {
             string json = File.ReadAllText(path);
@@ -118,4 +120,27 @@ public class MainManager : MonoBehaviour
             placeHolderText.text = $"{input}";
         }       
     }
+
+    public void SavePlayerName(string name)
+    {
+        SaveData data = new SaveData();
+        data.playerName = name;
+        string jsonData = JsonUtility.ToJson(data);
+        File.WriteAllText(Application.persistentDataPath + "/playername.json", jsonData);
+    }
+
+    public string LoadPlayerName()
+    {
+        string filePath = Application.persistentDataPath + "/playerName.json";
+        if (File.Exists(filePath))
+        {
+            string jsonData = File.ReadAllText(filePath);
+            SaveData data = JsonUtility.FromJson<SaveData>(jsonData);
+            return data.playerName;
+        }
+        else
+        {
+            return "";
+        }
+    }  
 }
