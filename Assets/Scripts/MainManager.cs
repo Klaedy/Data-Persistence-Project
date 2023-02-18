@@ -1,76 +1,121 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class MainManager : MonoBehaviour
 {
-    public Brick BrickPrefab;
-    public int LineCount = 6;
-    public Rigidbody Ball;
+    public static MainManager Instance;
+    public string input;
+    public int record;
+    private GameManager gameManagerScript;
+    public Text placeHolderText;
+    private bool scene1 = false;
 
-    public Text ScoreText;
-    public GameObject GameOverText;
-    
-    private bool m_Started = false;
-    private int m_Points;
-    
-    private bool m_GameOver = false;
-
-    
-    // Start is called before the first frame update
     void Start()
     {
-        const float step = 0.6f;
-        int perLine = Mathf.FloorToInt(4.0f / step);
+      
+    }
+
+    void Update()
+    {
+        CallGameManager();
+        PlaceHolderName();
         
-        int[] pointCountArray = new [] {1,1,2,2,5,5};
-        for (int i = 0; i < LineCount; ++i)
+    }
+    private void Awake()
+    {
+        if (Instance != null)
         {
-            for (int x = 0; x < perLine; ++x)
-            {
-                Vector3 position = new Vector3(-1.5f + step * x, 2.5f + i * 0.3f, 0);
-                var brick = Instantiate(BrickPrefab, position, Quaternion.identity);
-                brick.PointValue = pointCountArray[i];
-                brick.onDestroyed.AddListener(AddPoint);
-            }
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+
+    public void ReadInputField(string s)
+    {
+        input = s;
+        Debug.Log(s);
+        SaveName();
+    }
+
+    public void StartGame()
+    {
+        SceneManager.LoadScene(1);
+    }
+
+    public void CallGameManager()
+    {
+        Scene currentScene = SceneManager.GetActiveScene();
+        if (currentScene.buildIndex == 1 && scene1 == false)
+        {
+            gameManagerScript = GameObject.Find("GameManager").GetComponent<GameManager>();
+            scene1 = true;
         }
     }
 
-    private void Update()
+    [System.Serializable]
+    class SaveData
     {
-        if (!m_Started)
-        {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                m_Started = true;
-                float randomDirection = Random.Range(-1.0f, 1.0f);
-                Vector3 forceDir = new Vector3(randomDirection, 1, 0);
-                forceDir.Normalize();
+        public string input;
+        public int record;
+    }
 
-                Ball.transform.SetParent(null);
-                Ball.AddForce(forceDir * 2.0f, ForceMode.VelocityChange);
-            }
-        }
-        else if (m_GameOver)
+    public void SaveName()
+    {
+        SaveData data = new SaveData();
+        data.input = input;
+
+        string json = JsonUtility.ToJson(data);
+
+        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
+    }
+
+    public void SavePoints()
+    {
+        gameManagerScript = GameObject.Find("GameManager").GetComponent<GameManager>();
+        record = gameManagerScript.m_Points;
+        SaveData data = new SaveData();
+        data.record = gameManagerScript.m_Points;
+        string json = JsonUtility.ToJson(data);
+        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);       
+    }
+
+    public void LoadName()
+    {
+        string path = Application.persistentDataPath + "/savefile.json";
+        if (File.Exists(path))
         {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-            }
+            string json = File.ReadAllText(path);
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+
+            input = data.input;
         }
     }
 
-    void AddPoint(int point)
+    public void LoadPoints()
     {
-        m_Points += point;
-        ScoreText.text = $"Score : {m_Points}";
-    }
+        string path = Application.persistentDataPath + "/savefile.json";
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
 
-    public void GameOver()
+            record = data.record;
+        }
+    }
+    public void PlaceHolderName()
     {
-        m_GameOver = true;
-        GameOverText.SetActive(true);
+        Scene currentScene = SceneManager.GetActiveScene();
+        if (currentScene.buildIndex == 0)
+        {
+            LoadName();
+            placeHolderText.GetComponent<Text>();
+            placeHolderText.text = $"{input}";
+        }       
     }
 }
